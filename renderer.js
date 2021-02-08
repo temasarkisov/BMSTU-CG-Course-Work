@@ -8,26 +8,31 @@ import { RGBELoader } from './node_modules/three/examples/jsm/loaders/RGBELoader
 let container, stats;
 const params = {
     projection: 'normal',
-    autoRotate: true,
-    reflectivity: 1.0,
+    autoRotate: false,
     background: false,
-    exposure: 1.0,
+    position: 'front',
     gemColor: 'White',
-    gemCut: 'Talla Brillante'
+    gemCut: 'Talla Brillante',
+    lightMode: 'on'
 };
+
 let camera, scene, renderer;
 let gemBackMaterial, gemFrontMaterial;
+let lightMode;
 let gemCut;
+let cameraPosition;
 let hdrCubeRenderTarget;
+let cameraBreakValue = 0
 
-const objects = [];
+let objects = [];
 
 function init() {
     container = document.createElement('div');
     document.body.appendChild(container);
 
     camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set(0.0, - 20, 20 * 3.5);
+    camera.position.set(70, 0, 0);
+    cameraPosition = 'front'
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -84,19 +89,17 @@ function init() {
         });
     });
 
-    new RGBELoader()
-        .setDataType( THREE.UnsignedByteType )
-        .setPath('textures/')
-        .load('studio_small_03_1k.hdr', function (hdrEquirect) {
+    lightMode = 'on'
 
-            hdrCubeRenderTarget = pmremGenerator.fromEquirectangular(hdrEquirect);
-            pmremGenerator.dispose();
+    new RGBELoader().setDataType( THREE.UnsignedByteType ).setPath('textures/').load('lights_on.hdr', function (hdrEquirect) {
+        hdrCubeRenderTarget = pmremGenerator.fromEquirectangular(hdrEquirect);
+        pmremGenerator.dispose();
 
-            gemFrontMaterial.envMap = gemBackMaterial.envMap = hdrCubeRenderTarget.texture;
-            gemFrontMaterial.needsUpdate = gemBackMaterial.needsUpdate = true;
+        gemFrontMaterial.envMap = gemBackMaterial.envMap = hdrCubeRenderTarget.texture;
+        gemFrontMaterial.needsUpdate = gemBackMaterial.needsUpdate = true;
 
-            hdrEquirect.dispose();
-        } );
+        hdrEquirect.dispose();
+    } );
 
     const pmremGenerator = new THREE.PMREMGenerator( renderer );
     pmremGenerator.compileEquirectangularShader();
@@ -144,8 +147,8 @@ function init() {
 
     const gui = new GUI();
 
-    gui.add( params, 'reflectivity', 0, 1 );
-    gui.add( params, 'exposure', 0.1, 2 );
+    gui.add( params, 'position', [ 'front', 'top' ] );
+    gui.add( params, 'lightMode', [ 'on', 'off' ] );
     gui.add( params, 'autoRotate' );
     gui.add( params, 'gemColor', [ 'Blue', 'Green', 'Red', 'White', 'Black', 'Lil Uzi Pink'] );
     gui.add( params, 'gemCut', [ 'Talla Brillante', 'Talla Esmeralda', 'Talla Perruzi', 'Talla Heart','Lil Uzi Diamod'] );
@@ -166,14 +169,15 @@ function animate() {
     requestAnimationFrame(animate);
 
     stats.begin();
-    render();
+    render()
     stats.end();
 }
 
 function render() {
+    
     if (gemBackMaterial !== undefined && gemFrontMaterial !== undefined) {
 
-        gemFrontMaterial.reflectivity = gemBackMaterial.reflectivity = params.reflectivity;
+        gemFrontMaterial.reflectivity = gemBackMaterial.reflectivity = 1;
 
         let newColor = gemBackMaterial.color;
         switch (params.gemColor) {
@@ -194,10 +198,41 @@ function render() {
 
             let loader = new OBJLoader(manager);
 
+        if (params.lightMode != lightMode) {
+            switch (params.position) {
+                case 'on': 
+                    new RGBELoader().setDataType( THREE.UnsignedByteType ).setPath('textures/').load('lights_on.hdr', function (hdrEquirect) {
+                        hdrCubeRenderTarget = pmremGenerator.fromEquirectangular(hdrEquirect);
+                        pmremGenerator.dispose();
+                
+                        gemFrontMaterial.envMap = gemBackMaterial.envMap = hdrCubeRenderTarget.texture;
+                        gemFrontMaterial.needsUpdate = gemBackMaterial.needsUpdate = true;
+            
+                        hdrEquirect.dispose();
+                    } ); break;
+
+                case 'off': 
+                    new RGBELoader().setDataType( THREE.UnsignedByteType ).setPath('textures/').load('lights_off.hdr', function (hdrEquirect) {
+                        hdrCubeRenderTarget = pmremGenerator.fromEquirectangular(hdrEquirect);
+                        pmremGenerator.dispose();
+                
+                        gemFrontMaterial.envMap = gemBackMaterial.envMap = hdrCubeRenderTarget.texture;
+                        gemFrontMaterial.needsUpdate = gemBackMaterial.needsUpdate = true;
+            
+                        hdrEquirect.dispose();
+                    } ); break;
+            }
+            
+            lightMode = params.lightMode
+
+            const pmremGenerator = new THREE.PMREMGenerator( renderer );
+            pmremGenerator.compileEquirectangularShader();
+        }
+
         if (params.gemCut != gemCut) {
             var selectedObject = scene.getObjectByName("gemModel");
-            console.log(selectedObject)
             scene.remove(selectedObject);
+            objects = []
 
             switch (params.gemCut) {
                 case 'Talla Brillante': 
@@ -297,18 +332,37 @@ function render() {
             }
 
             gemCut = params.gemCut
+            cameraBreakValue = 0
+        }
+        
+        if (params.position != cameraPosition) {
+            switch (params.position) {
+                case 'front': camera.position.set(70, 0, 0); break;
+                case 'top': camera.position.set(0, 70, 0); break; 
+            }
+
+            cameraPosition = params.position
         }
     }
 
-    renderer.toneMappingExposure = params.exposure;
+    renderer.toneMappingExposure = 1.0;
     camera.lookAt( scene.position );
 
     if ( params.autoRotate ) {
         for ( let i = 0, l = objects.length; i < l; i ++ ) {
             const object = objects[ i ];
-            object.rotation.y += 0.005;
+            if (cameraBreakValue === 30) {
+                object.rotation.y += 0.1;
+                cameraBreakValue = 0
+            }
         }
+        cameraBreakValue += 1
     }
+
+    if ( !params.autoRotate ) {
+        cameraBreakValue = 0
+    }
+
     renderer.render( scene, camera );
 }
 
