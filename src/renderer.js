@@ -91,7 +91,7 @@ function init() {
 
     lightMode = 'on'
 
-    new RGBELoader().setDataType( THREE.UnsignedByteType ).setPath('textures/').load('lights_on.hdr', function (hdrEquirect) {
+    new RGBELoader().setDataType( THREE.UnsignedByteType ).setPath('textures/').load('lights_off.hdr', function (hdrEquirect) {
         hdrCubeRenderTarget = pmremGenerator.fromEquirectangular(hdrEquirect);
         pmremGenerator.dispose();
 
