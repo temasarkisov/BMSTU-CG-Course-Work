@@ -71,7 +71,7 @@ function init() {
     };
 
     let loader = new OBJLoader(manager);
-    loader.load('models/talla_brillante.obj', function (object) {
+    loader.load('gem_models/talla_brillante.obj', function (object) {
         object.traverse(function (child) {
             if (child instanceof THREE.Mesh) {
                 child.material = gemBackMaterial;
@@ -236,7 +236,7 @@ function render() {
 
             switch (params.gemCut) {
                 case 'Talla Brillante': 
-                    loader.load('models/talla_brillante.obj', function (object) {
+                    loader.load('gem_models/talla_brillante.obj', function (object) {
                         object.traverse(function (child) {
                             if (child instanceof THREE.Mesh) {
                                 child.material = gemBackMaterial;
@@ -255,7 +255,7 @@ function render() {
                     }); break;
 
                 case 'Talla Esmeralda': console.log(params.gemCut); 
-                    loader.load('models/talla_esmeralda.obj', function (object) {
+                    loader.load('gem_models/talla_esmeralda.obj', function (object) {
                         object.traverse(function (child) {
                             if (child instanceof THREE.Mesh) {
                                 child.material = gemBackMaterial;
@@ -274,7 +274,7 @@ function render() {
                     }); break;
 
                 case 'Lil Uzi Diamod': console.log(params.gemCut); 
-                    loader.load('models/lil_uzi_diamond.obj', function (object) {
+                    loader.load('gem_models/lil_uzi_diamond.obj', function (object) {
                         object.traverse(function (child) {
                             if (child instanceof THREE.Mesh) {
                                 child.material = gemBackMaterial;
@@ -293,7 +293,7 @@ function render() {
                     }); break;
 
                 case 'Talla Perruzi': console.log(params.gemCut); 
-                    loader.load('models/talla_perruzi.obj', function (object) {
+                    loader.load('gem_models/talla_perruzi.obj', function (object) {
                         object.traverse(function (child) {
                             if (child instanceof THREE.Mesh) {
                                 child.material = gemBackMaterial;
@@ -312,7 +312,7 @@ function render() {
                     }); break;
 
                 case 'Talla Heart': console.log(params.gemCut); 
-                    loader.load('models/talla_heart.obj', function (object) {
+                    loader.load('gem_models/talla_heart.obj', function (object) {
                         object.traverse(function (child) {
                             if (child instanceof THREE.Mesh) {
                                 child.material = gemBackMaterial;
